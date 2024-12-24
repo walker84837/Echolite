@@ -1,0 +1,9 @@
+name: MineCord
+version: '0.1.0-SNAPSHOT'
+main: 'org.winlogon.MineCord'
+api-version: 1.21
+description: 'Uncomplicated Discord-Minecraft bridge for chat.'
+folia-supported: true
+commands:
+  discord:
+    description: "Get the Discord invite link of the server"

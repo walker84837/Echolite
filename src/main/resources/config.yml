@@ -1,0 +1,12 @@
+# Links for reference:
+# - https://discord.com/developers/applications
+
+discord:
+  # The Discord bot's token.
+  token: "BOT_TOKEN"
+  channel-id: "CHANNEL_ID"
+message:
+  # How a message looks when sent from Minecraft
+  minecraft: "**$user_name**: $message"
+  # How a message looks when sent from Discord
+  discord: "(Discord) $display_name ($handle): $message"
