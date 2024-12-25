@@ -3,6 +3,7 @@ package org.winlogon
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import scala.util.matching.Regex
 import net.dv8tion.jda.api.{JDABuilder, JDA}
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -85,9 +86,11 @@ class MineCord extends JavaPlugin with Listener {
 
   @EventHandler
   def onPlayerChat(event: AsyncPlayerChatEvent): Unit = {
+    val playerMessage = "&[a-zA-Z0-9]".r replaceAllIn(event.getMessage, "")
+    println(playerMessage)
     val message = config.minecraftMessage
       .replace("$user_name", event.getPlayer.getName)
-      .replace("$message", event.getMessage)
+      .replace("$message", playerMessage.trim)
     sendMessageToDiscord(message)
   }
 
