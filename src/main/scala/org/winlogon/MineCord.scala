@@ -4,10 +4,14 @@ import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.util.matching.Regex
+import scala.jdk.CollectionConverters._
 import net.dv8tion.jda.api.{JDABuilder, JDA}
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import org.bukkit.Bukkit
 import org.bukkit.event.{Listener, EventHandler}
 import org.bukkit.event.player.AsyncPlayerChatEvent
@@ -77,6 +81,14 @@ class MineCord extends JavaPlugin with Listener {
     }
 
     getServer.getPluginManager.registerEvents(this, this)
+
+    jda.foreach { bot =>
+      val commands = bot.updateCommands()
+      commands.addCommands(
+        Commands.slash("list", "Show the list of online players")
+      )
+      commands.queue()
+    }
   }
 
   override def onDisable(): Unit = {
@@ -129,6 +141,21 @@ class MineCord extends JavaPlugin with Listener {
         Bukkit.getGlobalRegionScheduler.execute(MineCord.this, new Runnable {
           override def run(): Unit = Bukkit.broadcastMessage(message)
         })
+      }
+    }
+
+    override def onSlashCommandInteraction(event: SlashCommandInteractionEvent): Unit = {
+      if (event.getName == "list") {
+        val players = Bukkit.getOnlinePlayers.asScala
+        val playerNames = if (players.isEmpty) {
+          "No players are currently online."
+        } else {
+          players.map(_.getName).mkString(", ")
+        }
+
+        event.reply(s"Online Players: $playerNames")
+          .setEphemeral(true)
+          .queue()
       }
     }
   }
