@@ -1,28 +1,23 @@
 package org.winlogon
 
-import java.util.concurrent.Executors
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
-import scala.util.matching.Regex
-import scala.jdk.CollectionConverters._
 import net.dv8tion.jda.api.{JDABuilder, JDA}
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.interactions.commands.OptionType
+
 import org.bukkit.{Bukkit, ChatColor}
 import org.bukkit.event.{Listener, EventHandler}
-import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.plugin.java.JavaPlugin
-import org.bukkit.scheduler.BukkitRunnable
+
+import java.util.concurrent.Executors
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 case class Configuration(
-  token: String,
-  channelId: String,
-  discordMessage: String,
-  minecraftMessage: String,
+    token: String,
+    channelId: String,
+    discordMessage: String,
+    minecraftMessage: String
 )
 
 class MineCord extends JavaPlugin with Listener {
@@ -44,14 +39,18 @@ class MineCord extends JavaPlugin with Listener {
       getConfig.getString("discord.token"),
       getConfig.getString("discord.channel-id"),
       getConfig.getString("message.discord"),
-      getConfig.getString("message.minecraft"),
+      getConfig.getString("message.minecraft")
     )
   }
 
   private def validateConfig(config: Configuration): Boolean = {
-    if (config.token.isEmpty || config.channelId.isEmpty || 
-        config.channelId == "CHANNEL_ID" || config.token == "BOT_TOKEN") {
-      getLogger.severe("The Discord bot isn't configured for use in this server. Check the config file.")
+    if (
+      config.token.isEmpty || config.channelId.isEmpty ||
+      config.channelId == "CHANNEL_ID" || config.token == "BOT_TOKEN"
+    ) {
+      getLogger.severe(
+        "The Discord bot isn't configured for use in this server. Check the config file."
+      )
       false
     } else {
       true
@@ -67,46 +66,55 @@ class MineCord extends JavaPlugin with Listener {
       return
     }
 
-    try {
-      getLogger.info("Starting Discord bot")
-      jda = Some(JDABuilder.createDefault(config.token)
-        .addEventListeners(new DiscordListener(config.channelId))
-        .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-        .build()
-      )
-    } catch {
-      case e: Exception =>
-        getLogger.severe(s"Failed to initialize Discord bot: ${e.getMessage}")
-        getServer.getPluginManager.disablePlugin(this)
-    }
+    val discordBotManager = new DiscordBotManager(this, config)(ec)
+    discordBotManager.startBot()
 
-    getServer.getPluginManager.registerEvents(this, this)
-
-    jda.foreach { bot =>
-      val commands = bot.updateCommands()
-      commands.addCommands(
-        Commands.slash("list", "Show the list of online players")
-      )
-      commands.queue()
-    }
+    getServer.getPluginManager.registerEvents(new MinecraftChatBridge(config, discordBotManager), this)
   }
 
   override def onDisable(): Unit = {
     jda.foreach(_.shutdown())
     jda = None
   }
+}
 
-  @EventHandler
-  def onPlayerChat(event: AsyncPlayerChatEvent): Unit = {
-    val playerMessage = "&[a-zA-Z0-9]".r replaceAllIn(event.getMessage, "")
-    println(playerMessage)
-    val message = config.minecraftMessage
-      .replace("$user_name", event.getPlayer.getName)
-      .replace("$message", playerMessage.trim)
-    sendMessageToDiscord(message)
+class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: ExecutionContext) {
+  private var jda: Option[JDA] = None
+
+  def startBot(): Unit = {
+    try {
+      plugin.getLogger.info("Starting Discord bot")
+      jda = Some(
+        JDABuilder
+          .createDefault(config.token)
+          .addEventListeners(new DiscordChatBridge(plugin, config))
+          .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+          .build()
+      )
+    } catch {
+      case e: Exception =>
+        plugin.getLogger.severe(s"Failed to initialize Discord bot: ${e.getMessage}")
+        plugin.getServer.getPluginManager.disablePlugin(plugin)
+    }
+
+    jda.foreach { bot =>
+      val commands = bot.updateCommands()
+      commands.addCommands(
+        Commands.slash("list", "Show the list of online players"),
+        Commands.slash("msg", "Send a one-way message to a Minecraft player")
+          .addOption(OptionType.STRING, "player", "The name of the player to message", true)
+          .addOption(OptionType.STRING, "message", "The message to send", true)
+      )
+      commands.queue()
+    }
   }
 
-  private def sendMessageToDiscord(message: String): Unit = {
+  def shutdownBot(): Unit = {
+    jda.foreach(_.shutdown())
+    jda = None
+  }
+
+  def sendMessageToDiscord(message: String): Unit = {
     jda.foreach { bot =>
       val channel = bot.getTextChannelById(config.channelId)
 
@@ -115,50 +123,17 @@ class MineCord extends JavaPlugin with Listener {
           channel.sendMessage(message).queue()
         }.onComplete {
           case Failure(exception) =>
-            getLogger.severe(s"Failed to send message to Discord: ${exception.getMessage}")
+            plugin.getLogger.severe(
+              s"Failed to send message to Discord: ${exception.getMessage}"
+            )
           case Success(_) => // Message sent successfully
         }
       } else {
-        getLogger.severe("Discord channel not found. Please check the channel ID in the config.")
-      }
-    }
-  }
-
-  private class DiscordListener(channelId: String) extends ListenerAdapter {
-    override def onMessageReceived(event: MessageReceivedEvent): Unit = {
-      if (!event.getChannel.getId.equals(channelId) || event.getAuthor.isBot) return
-
-      val msg = config.discordMessage
-        .replace("$display_name", event.getAuthor.getEffectiveName)
-        .replace("$handle", event.getAuthor.getName)
-        .replace("$message", event.getMessage.getContentDisplay)
-
-      val message = ChatColor.translateAlternateColorCodes('&', msg)
-
-      if (!isFolia) {
-        new BukkitRunnable {
-          override def run(): Unit = Bukkit.broadcastMessage(message)
-        }.runTask(MineCord.this)
-      } else {
-        Bukkit.getGlobalRegionScheduler.execute(MineCord.this, new Runnable {
-          override def run(): Unit = Bukkit.broadcastMessage(message)
-        })
-      }
-    }
-
-    override def onSlashCommandInteraction(event: SlashCommandInteractionEvent): Unit = {
-      if (event.getName == "list") {
-        val players = Bukkit.getOnlinePlayers.asScala
-        val playerNames = if (players.isEmpty) {
-          "No players are currently online."
-        } else {
-          players.map(_.getName).mkString(", ")
-        }
-
-        event.reply(s"Online Players: $playerNames")
-          .setEphemeral(true)
-          .queue()
+        plugin.getLogger.severe(
+          "Discord channel not found. Please check the channel ID in the config."
+        )
       }
     }
   }
 }
+
