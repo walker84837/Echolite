@@ -75,8 +75,7 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
     }
 
     val formattedMessage = ChatColor.translateAlternateColorCodes(
-      '&',
-      s"&8(&3${event.getUser.getName}&7 -> &2you&8)&7: $message"
+      '&', s"&8(&3${event.getUser.getName}&7 -> &2you&8)&7 $message"
     )
 
     if (!isFolia(plugin)) {
