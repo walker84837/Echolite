@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.interactions.commands.OptionType
-import org.bukkit.Bukkit
+import org.bukkit.{Bukkit, ChatColor}
 import org.bukkit.event.{Listener, EventHandler}
 import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.plugin.java.JavaPlugin
@@ -128,10 +128,12 @@ class MineCord extends JavaPlugin with Listener {
     override def onMessageReceived(event: MessageReceivedEvent): Unit = {
       if (!event.getChannel.getId.equals(channelId) || event.getAuthor.isBot) return
 
-      val message = config.discordMessage
+      val msg = config.discordMessage
         .replace("$display_name", event.getAuthor.getEffectiveName)
         .replace("$handle", event.getAuthor.getName)
         .replace("$message", event.getMessage.getContentDisplay)
+
+      val message = ChatColor.translateAlternateColorCodes('&', msg)
 
       if (!isFolia) {
         new BukkitRunnable {

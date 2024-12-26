@@ -9,4 +9,4 @@ message:
   # How a message looks when sent from Minecraft
   minecraft: "**$user_name**: $message"
   # How a message looks when sent from Discord
-  discord: "(Discord) $display_name ($handle): $message"
+  discord: "&8(&3Discord&8) &2$display_name&7: &f$message"
