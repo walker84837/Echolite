@@ -24,5 +24,5 @@ hs_err_pid*
  # Reference: https://scalameta.org/metals/
 .metals/
 .bloop/
+.bsp/
 project/metals.sbt
-
