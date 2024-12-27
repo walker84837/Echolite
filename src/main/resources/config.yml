@@ -5,8 +5,15 @@ discord:
   # The Discord bot's token.
   token: "BOT_TOKEN"
   channel-id: "CHANNEL_ID"
+  # If the sender from Discord doesn't have a role, use this name.
+  default-role: "Default"
 message:
   # How a message looks when sent from Minecraft
   minecraft: "**$user_name**: $message"
   # How a message looks when sent from Discord
-  discord: "&8(&3Discord&8) &2$display_name&7: &f$message"
+  # Available placeholders:
+  # - $display_name: The user's display name
+  # - $handle: The user's handle (like @johndoe)
+  # - $role: The user's highest role (like admin)
+  # - $message: The user's message
+  discord: "&8(&3Discord&8) &8[&a$role&8]  &2$display_name&7: &f$message"

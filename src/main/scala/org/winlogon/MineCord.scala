@@ -16,8 +16,9 @@ import scala.util.{Failure, Success}
 case class Configuration(
     token: String,
     channelId: String,
+    defaultRole: String,
     discordMessage: String,
-    minecraftMessage: String
+    minecraftMessage: String,
 )
 
 class MineCord extends JavaPlugin with Listener {
@@ -38,6 +39,7 @@ class MineCord extends JavaPlugin with Listener {
     Configuration(
       getConfig.getString("discord.token"),
       getConfig.getString("discord.channel-id"),
+      getConfig.getString("discord.default-role"),
       getConfig.getString("message.discord"),
       getConfig.getString("message.minecraft")
     )

@@ -19,9 +19,17 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
     if (!event.getChannel.getId.equals(config.channelId) || event.getAuthor.isBot)
       return
 
+    val roles = event.getMember.getRoles
+    val userRole = if (!roles.isEmpty) {
+      Some(roles.get(0).getName())
+    } else {
+      None
+    }
+
     val msg = config.discordMessage
       .replace("$display_name", event.getAuthor.getEffectiveName)
       .replace("$handle", event.getAuthor.getName)
+      .replace("$role", userRole.getOrElse(config.defaultRole))
       .replace("$message", event.getMessage.getContentDisplay)
 
     val message = ChatColor.translateAlternateColorCodes('&', msg)
