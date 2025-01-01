@@ -7,7 +7,7 @@ ThisBuild / organizationName := "winlogon"
 Compile / mainClass := Some("org.winlogon.MineCord")
 
 // GitHub CI
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.temurin("21")
+ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21"))
 ThisBuild / publishTo := None
 publish / skip := true
 
