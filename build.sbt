@@ -29,7 +29,7 @@ assembly / mainClass := Some("org.winlogon.MineCord")
 
 libraryDependencies ++= Seq(
   "io.papermc.paper" % "paper-api" % "1.21.4-R0.1-SNAPSHOT" % Provided,
-  "net.dv8tion" % "JDA" % "5.2.1",
+  "net.dv8tion" % "JDA" % "5.2.3",
 )
 
 resolvers += "papermc-repo" at "https://repo.papermc.io/repository/maven-public/"
