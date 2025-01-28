@@ -1,27 +1,33 @@
 package org.winlogon
 
+import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.{JDABuilder, JDA}
 
-import org.bukkit.{Bukkit, ChatColor}
 import org.bukkit.event.{Listener, EventHandler}
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.scheduler.BukkitRunnable
+import org.bukkit.{Bukkit, ChatColor}
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{TimeUnit, Executors}
+import java.util.concurrent.{ScheduledExecutorService}
+
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Try, Failure, Success}
+import scala.jdk.CollectionConverters._
+import scala.util.{Try, Random, Failure, Success}
 
 case class Configuration(
-    token: String,
-    channelId: String,
-    defaultRole: String,
-    sendStatusMessages: Boolean,
-    sendPlayerJoinMessages: Boolean,
-    discordMessage: String,
-    minecraftMessage: String,
+  token: String,
+  channelId: String,
+  defaultRole: String,
+  sendStatusMessages: Boolean,
+  sendPlayerJoinMessages: Boolean,
+  statusList: List[String],
+  discordMessage: String,
+  minecraftMessage: String,
 )
 
 class MineCord extends JavaPlugin with Listener {
@@ -31,7 +37,7 @@ class MineCord extends JavaPlugin with Listener {
   private var discordBotManager: DiscordBotManager = _
   val logger = this.getLogger
 
-  private def isFolia: Boolean = {
+  def isFolia: Boolean = {
     try {
       Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
       true
@@ -47,6 +53,7 @@ class MineCord extends JavaPlugin with Listener {
       getConfig.getString("discord.default-role"),
       getConfig.getBoolean("discord.status-messages"),
       getConfig.getBoolean("discord.player-join-messsages"),
+      getConfig.getList("discord.status-list").asScala.map(_.toString).toList,
       getConfig.getString("message.discord"),
       getConfig.getString("message.minecraft")
     )
@@ -97,8 +104,14 @@ class MineCord extends JavaPlugin with Listener {
   }
 }
 
+import java.util.concurrent.TimeUnit
+import scala.util.Random
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
+
 class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: ExecutionContext) {
   private var jda: Option[JDA] = None
+  private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
   def startBot(): Unit = {
     try {
@@ -125,11 +138,15 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
           .addOption(OptionType.STRING, "message", "The message to send", true)
       )
       commands.queue()
+
+      // Start status cycling
+      startStatusCycling()
     }
   }
 
   def shutdownBot(): Unit = {
     jda.foreach(_.shutdown())
+    scheduler.shutdown()
     jda = None
   }
 
@@ -154,5 +171,34 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
       }
     }
   }
-}
 
+  def startStatusCycling(): Unit = {
+    def scheduleNextStatusChange(): Unit = {
+      // Random delay between 5 and 10 minutes
+      val randomDelay = 5 + Random.nextInt(6)
+      scheduler.schedule(
+        new Runnable {
+          override def run(): Unit = {
+            val newStatus = config.statusList(Random.nextInt(config.statusList.size))
+            plugin.getLogger.info(s"Changing status to '$newStatus'")
+            jda.foreach(_.getPresence.setActivity(Activity.playing(newStatus)))
+            scheduleNextStatusChange()
+          }
+        },
+        randomDelay,
+        TimeUnit.MINUTES
+      )
+    }
+
+    scheduleNextStatusChange()
+  }
+
+  def isFolia: Boolean = {
+    try {
+      Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
+      true
+    } catch {
+      case _: ClassNotFoundException => false
+    }
+  }
+}

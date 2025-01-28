@@ -11,6 +11,11 @@ discord:
   status-messages: true
   # Send a message on Discord saying that a player joined or left the server.
   player-join-messsages: false
+  # List of statuses the bots will cycle through at random times.
+  status-list:
+    - "Installing Arch Linux on every server"
+    - "Making every developer use Neovim"
+    - "Porting everything to Rust"
 message:
   # How a message looks when sent from Minecraft
   minecraft: "**$user_name**: $message"
