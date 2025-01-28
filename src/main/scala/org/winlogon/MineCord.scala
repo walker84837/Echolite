@@ -1,9 +1,10 @@
 package org.winlogon
 
-import net.dv8tion.jda.api.{JDABuilder, JDA}
+import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
-import net.dv8tion.jda.api.interactions.commands.OptionType
+import net.dv8tion.jda.api.{JDABuilder, JDA}
 
 import org.bukkit.{Bukkit, ChatColor}
 import org.bukkit.event.{Listener, EventHandler}
@@ -11,7 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin
 
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
 
 case class Configuration(
     token: String,
@@ -80,11 +81,12 @@ class MineCord extends JavaPlugin with Listener {
     discordBotManager = new DiscordBotManager(this, config)(ec)
     discordBotManager.startBot()
 
+    getServer.getPluginManager.registerEvents(new MinecraftChatBridge(config, discordBotManager), this)
+
     if (config.sendStatusMessages) {
+      // TODO: doesn't send message to the server
       discordBotManager.sendMessageToDiscord("**Server Status** The server is online.")
     }
-
-    getServer.getPluginManager.registerEvents(new MinecraftChatBridge(config, discordBotManager), this)
   }
 
   override def onDisable(): Unit = {
