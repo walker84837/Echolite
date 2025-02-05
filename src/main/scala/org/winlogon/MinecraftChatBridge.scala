@@ -2,10 +2,10 @@ package org.winlogon
 
 import org.bukkit.event.player.PlayerQuitEvent.QuitReason
 import org.bukkit.event.player.{AsyncPlayerChatEvent, PlayerJoinEvent, PlayerQuitEvent}
-import org.bukkit.event.{EventHandler, Listener}
+import org.bukkit.event.{EventHandler, Listener, EventPriority}
 
 class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotManager) extends Listener {
-  @EventHandler
+  @EventHandler(EventPriority.LOWEST)
   def onPlayerChat(event: AsyncPlayerChatEvent): Unit = {
     val playerMessage = "&[a-zA-Z0-9]".r replaceAllIn (event.getMessage, "")
     val miniMessageFormat = """<[^>]*>""".r replaceAllIn (playerMessage, "")
