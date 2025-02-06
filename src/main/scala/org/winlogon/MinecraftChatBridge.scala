@@ -5,8 +5,10 @@ import org.bukkit.event.player.{AsyncPlayerChatEvent, PlayerJoinEvent, PlayerQui
 import org.bukkit.event.{EventHandler, Listener, EventPriority}
 
 class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotManager) extends Listener {
-  @EventHandler(EventPriority.LOWEST)
+  @EventHandler(EventPriority.LOW)
   def onPlayerChat(event: AsyncPlayerChatEvent): Unit = {
+    if (event.isCancelled()) return
+
     val playerMessage = "&[a-zA-Z0-9]".r replaceAllIn (event.getMessage, "")
     val miniMessageFormat = """<[^>]*>""".r replaceAllIn (playerMessage, "")
     val message = config.minecraftMessage
