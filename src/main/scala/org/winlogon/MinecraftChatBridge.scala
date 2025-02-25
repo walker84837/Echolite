@@ -1,15 +1,20 @@
 package org.winlogon
 
 import org.bukkit.event.player.PlayerQuitEvent.QuitReason
-import org.bukkit.event.player.{AsyncPlayerChatEvent, PlayerJoinEvent, PlayerQuitEvent}
+import org.bukkit.event.player.{PlayerJoinEvent, PlayerQuitEvent}
 import org.bukkit.event.{EventHandler, Listener, EventPriority}
+
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+import io.papermc.paper.event.player.AsyncChatEvent
 
 class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotManager) extends Listener {
   @EventHandler(EventPriority.LOW)
-  def onPlayerChat(event: AsyncPlayerChatEvent): Unit = {
-    if (event.isCancelled()) return
+  def onPlayerChat(event: AsyncChatEvent): Unit = {
+    if (event.isCancelled) return
 
-    val playerMessage = "&[a-zA-Z0-9]".r replaceAllIn (event.getMessage, "")
+    val msg = PlainTextComponentSerializer.plainText().serialize(event.message())
+
+    val playerMessage = "&[a-zA-Z0-9]".r replaceAllIn (msg, "")
     val miniMessageFormat = """<[^>]*>""".r replaceAllIn (playerMessage, "")
     val message = config.minecraftMessage
       .replace("$user_name", event.getPlayer.getName)
