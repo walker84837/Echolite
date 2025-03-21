@@ -2,17 +2,20 @@ package org.winlogon
 
 import org.bukkit.event.player.PlayerQuitEvent.QuitReason
 import org.bukkit.event.player.{PlayerJoinEvent, PlayerQuitEvent}
+import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.{EventHandler, Listener, EventPriority}
 
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import io.papermc.paper.event.player.AsyncChatEvent
 
 class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotManager) extends Listener {
+  private val plainTextSerializer = PlainTextComponentSerializer.plainText()
+
   @EventHandler(EventPriority.LOW)
   def onPlayerChat(event: AsyncChatEvent): Unit = {
     if (event.isCancelled) return
 
-    val msg = PlainTextComponentSerializer.plainText().serialize(event.message())
+    val msg = plainTextSerializer.serialize(event.message())
 
     val playerMessage = "&[a-zA-Z0-9]".r replaceAllIn (msg, "")
     val miniMessageFormat = """<[^>]*>""".r replaceAllIn (playerMessage, "")
@@ -27,6 +30,17 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
     if (config.sendPlayerJoinMessages) {
         val player = event.getPlayer()
         discordBotManager.sendMessageToDiscord(s"**${player.getName}** has joined the server!")
+    }
+  }
+
+  @EventHandler
+  def onPlayerDeath(event: PlayerDeathEvent): Unit = {
+    if (config.sendPlayerDeathMessages) {
+      val deadPlayer = event.getPlayer()
+      val minecraftDeathMessage = event.deathMessage()
+      val discordMessage = plainTextSerializer.serialize(minecraftDeathMessage)
+
+      discordBotManager.sendMessageToDiscord(s"**${deadPlayer.getName}** $discordMessage")
     }
   }
 
