@@ -106,11 +106,6 @@ class MineCord extends JavaPlugin with Listener {
   }
 }
 
-import java.util.concurrent.TimeUnit
-import scala.util.Random
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-
 class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: ExecutionContext) {
   private var jda: Option[JDA] = None
   private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()

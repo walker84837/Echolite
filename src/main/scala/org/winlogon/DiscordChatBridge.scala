@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import net.kyori.adventure.text.Component
 
 import dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer
 
@@ -22,36 +23,31 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
   private val minecraftSerializer = MinecraftSerializer.INSTANCE
 
   override def onMessageReceived(event: MessageReceivedEvent): Unit = {
-    if (!event.getChannel.getId.equals(config.channelId) || event.getAuthor.isBot)
+    if (!event.getChannel.getId.equals(config.channelId) || event.getAuthor.isBot) {
       return
-
-    val roles = event.getMember.getRoles
-    val userRole = if (!roles.isEmpty) {
-      Some(roles.get(0).getName())
-    } else {
-      None
     }
 
-    val msg = config.discordMessage
+    val roles = event.getMember.getRoles
+    val userRole = if (!roles.isEmpty) Some(roles.get(0).getName()) else None
+
+    val rawConfig = config.discordMessage
       .replace("$display_name", event.getAuthor.getEffectiveName)
       .replace("$handle", event.getAuthor.getName)
       .replace("$role", userRole.getOrElse(config.defaultRole))
-      .replace("$message", event.getMessage.getContentDisplay)
 
-    val discordMessage = minecraftSerializer.serialize(msg)
-    val message: String = legacySerializer.serialize(discordMessage)
+    val discordMessageComponent: Component = minecraftSerializer.serialize(event.getMessage.getContentDisplay)
+    val discordMessageLegacy = legacySerializer.serialize(discordMessageComponent)
+    val finalLegacyMessage = rawConfig.replace("$message", discordMessageLegacy)
+    val finalComponent = legacySerializer.deserialize(finalLegacyMessage)
 
     if (!isFolia(plugin)) {
       new BukkitRunnable {
-        override def run(): Unit = Bukkit.broadcastMessage(message)
+        override def run(): Unit = Bukkit.broadcast(finalComponent)
       }.runTask(plugin)
     } else {
-      Bukkit.getGlobalRegionScheduler.execute(
-        plugin,
-        new Runnable {
-          override def run(): Unit = Bukkit.broadcastMessage(message)
-        }
-      )
+      Bukkit.getGlobalRegionScheduler.execute(plugin, new Runnable {
+        override def run(): Unit = Bukkit.broadcast(finalComponent)
+      })
     }
   }
 

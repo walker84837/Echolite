@@ -6,6 +6,7 @@ import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.{EventHandler, Listener, EventPriority}
 
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+import net.kyori.adventure.text.Component
 import io.papermc.paper.event.player.AsyncChatEvent
 
 class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotManager) extends Listener {
@@ -33,12 +34,17 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
     }
   }
 
-  @EventHandler
+  @EventHandler(ignoreCancelled = true)
   def onPlayerDeath(event: PlayerDeathEvent): Unit = {
-    if (config.sendPlayerDeathMessages) {
+    val shouldShowDeath = config.sendPlayerDeathMessages
+    println(s"player died, config: {shouldShowDeath}")
+    if (shouldShowDeath) {
       val deadPlayer = event.getPlayer()
-      val minecraftDeathMessage = event.deathMessage()
+      println(s"player died, player: {deadPlayer}")
+      val minecraftDeathMessage: Component = Option(event.deathMessage()).getOrElse(Component.text("died."))
+      println(s"player died, message: {minecraftDeathMessage}")
       val discordMessage = plainTextSerializer.serialize(minecraftDeathMessage)
+      println(s"player died, discordMessage: {discordMessage}")
 
       discordBotManager.sendMessageToDiscord(s"**${deadPlayer.getName}** $discordMessage")
     }
