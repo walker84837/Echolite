@@ -10,11 +10,17 @@ import org.bukkit.scheduler.BukkitRunnable
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+
+import dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext
 
 class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends ListenerAdapter  {
+  private val legacySerializer = LegacyComponentSerializer.legacyAmpersand()
+  private val minecraftSerializer = MinecraftSerializer.INSTANCE
+
   override def onMessageReceived(event: MessageReceivedEvent): Unit = {
     if (!event.getChannel.getId.equals(config.channelId) || event.getAuthor.isBot)
       return
@@ -32,7 +38,8 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
       .replace("$role", userRole.getOrElse(config.defaultRole))
       .replace("$message", event.getMessage.getContentDisplay)
 
-    val message = ChatColor.translateAlternateColorCodes('&', msg)
+    val discordMessage = minecraftSerializer.serialize(msg)
+    val message: String = legacySerializer.serialize(discordMessage)
 
     if (!isFolia(plugin)) {
       new BukkitRunnable {
