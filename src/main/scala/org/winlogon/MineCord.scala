@@ -136,7 +136,6 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
       )
       commands.queue()
 
-      // Start status cycling
       startStatusCycling()
     }
   }

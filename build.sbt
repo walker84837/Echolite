@@ -1,7 +1,11 @@
 import Dependencies._
+import sbtassembly.AssemblyPlugin.defaultShellScript
 
-ThisBuild / scalaVersion     := "3.3.4"
-ThisBuild / version          := "0.1.0-SNAPSHOT"
+lazy val buildScalaVersion = "3.3.5"
+lazy val pluginVersion = "0.2.0"
+
+ThisBuild / scalaVersion     := buildScalaVersion
+ThisBuild / version          := s"$pluginVersion-SNAPSHOT"
 ThisBuild / organization     := "org.winlogon"
 ThisBuild / organizationName := "winlogon"
 Compile / mainClass := Some("org.winlogon.MineCord")
@@ -11,12 +15,12 @@ ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21"))
 ThisBuild / publishTo := None
 publish / skip := true
 
-crossScalaVersions := Seq("3.3.4")
+crossScalaVersions := Seq(buildScalaVersion)
 
 lazy val root = (project in file("."))
   .settings(
     name := "minecord",
-    libraryDependencies += munit % Test
+    assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeScala(false),
   )
 
 // Merge strategy for avoiding conflicts in dependencies

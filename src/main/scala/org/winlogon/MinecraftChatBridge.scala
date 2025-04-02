@@ -36,18 +36,16 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
 
   @EventHandler(ignoreCancelled = true)
   def onPlayerDeath(event: PlayerDeathEvent): Unit = {
-    val shouldShowDeath = config.sendPlayerDeathMessages
-    println(s"player died, config: {shouldShowDeath}")
-    if (shouldShowDeath) {
-      val deadPlayer = event.getPlayer()
-      println(s"player died, player: {deadPlayer}")
-      val minecraftDeathMessage: Component = Option(event.deathMessage()).getOrElse(Component.text("died."))
-      println(s"player died, message: {minecraftDeathMessage}")
-      val discordMessage = plainTextSerializer.serialize(minecraftDeathMessage)
-      println(s"player died, discordMessage: {discordMessage}")
-
-      discordBotManager.sendMessageToDiscord(s"**${deadPlayer.getName}** $discordMessage")
+    if (!config.sendPlayerDeathMessages) {
+      return
     }
+
+    val deadPlayer = event.getPlayer()
+    val playerName = deadPlayer.getName
+    val minecraftDeathMessage: Component = Option(event.deathMessage()).getOrElse(Component.text("died."))
+    val discordMessage = plainTextSerializer.serialize(minecraftDeathMessage)
+
+    discordBotManager.sendMessageToDiscord(s"**${playerName}** ${discordMessage.replaceFirst(s"$playerName ", "")}")
   }
 
   @EventHandler

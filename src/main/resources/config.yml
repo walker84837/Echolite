@@ -27,4 +27,4 @@ message:
   # - $handle: The user's handle (like @johndoe)
   # - $role: The user's highest role (like admin)
   # - $message: The user's message
-  discord: "&8(&3Discord&8) &8[&a$role&8]  &2$display_name&7: &f$message"
+  discord: "&8(&3Discord&8) &8[&a$role&8] &2$display_name&7: &f$message"
