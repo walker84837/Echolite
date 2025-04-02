@@ -25,6 +25,7 @@ case class Configuration(
   defaultRole: String,
   sendStatusMessages: Boolean,
   sendPlayerJoinMessages: Boolean,
+  sendPlayerDeathMessages: Boolean,
   statusList: List[String],
   discordMessage: String,
   minecraftMessage: String,
@@ -53,6 +54,7 @@ class MineCord extends JavaPlugin with Listener {
       getConfig.getString("discord.default-role"),
       getConfig.getBoolean("discord.status-messages"),
       getConfig.getBoolean("discord.player-join-messsages"),
+      getConfig.getBoolean("discord.player-death-messages"),
       getConfig.getList("discord.status-list").asScala.map(_.toString).toList,
       getConfig.getString("message.discord"),
       getConfig.getString("message.minecraft")
@@ -104,11 +106,6 @@ class MineCord extends JavaPlugin with Listener {
   }
 }
 
-import java.util.concurrent.TimeUnit
-import scala.util.Random
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-
 class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: ExecutionContext) {
   private var jda: Option[JDA] = None
   private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
@@ -139,7 +136,6 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
       )
       commands.queue()
 
-      // Start status cycling
       startStatusCycling()
     }
   }

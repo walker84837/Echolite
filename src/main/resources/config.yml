@@ -11,6 +11,8 @@ discord:
   status-messages: true
   # Send a message on Discord saying that a player joined or left the server.
   player-join-messsages: false
+  # Send a message on Discord when a player dies.
+  player-death-messsages: false
   # List of statuses the bots will cycle through at random times.
   status-list:
     - "Installing Arch Linux on every server"
@@ -25,4 +27,4 @@ message:
   # - $handle: The user's handle (like @johndoe)
   # - $role: The user's highest role (like admin)
   # - $message: The user's message
-  discord: "&8(&3Discord&8) &8[&a$role&8]  &2$display_name&7: &f$message"
+  discord: "&8(&3Discord&8) &8[&a$role&8] &2$display_name&7: &f$message"
