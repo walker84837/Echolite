@@ -53,7 +53,7 @@ class MineCord extends JavaPlugin with Listener {
       getConfig.getString("discord.channel-id"),
       getConfig.getString("discord.default-role"),
       getConfig.getBoolean("discord.status-messages"),
-      getConfig.getBoolean("discord.player-join-messsages"),
+      getConfig.getBoolean("discord.player-join-messages"),
       getConfig.getBoolean("discord.player-death-messages"),
       getConfig.getList("discord.status-list").asScala.map(_.toString).toList,
       getConfig.getString("message.discord"),
