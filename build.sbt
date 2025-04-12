@@ -2,7 +2,7 @@ import Dependencies._
 import sbtassembly.AssemblyPlugin.defaultShellScript
 
 lazy val buildScalaVersion = "3.3.5"
-lazy val pluginVersion = "0.2.0"
+lazy val pluginVersion = "0.3.0"
 
 ThisBuild / scalaVersion     := buildScalaVersion
 ThisBuild / version          := s"$pluginVersion-SNAPSHOT"
