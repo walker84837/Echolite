@@ -3,12 +3,14 @@ import sbtassembly.AssemblyPlugin.defaultShellScript
 
 lazy val buildScalaVersion = "3.3.5"
 lazy val pluginVersion = "0.3.0"
+lazy val projectName = "Echolite"
+lazy val projectPackage = "org.winlogon.echolite"
 
 ThisBuild / scalaVersion     := buildScalaVersion
 ThisBuild / version          := s"$pluginVersion-SNAPSHOT"
 ThisBuild / organization     := "org.winlogon"
 ThisBuild / organizationName := "winlogon"
-Compile / mainClass := Some("org.winlogon.MineCord")
+Compile / mainClass := Some(s"$projectPackage.$projectName")
 
 // GitHub CI
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("21"))
@@ -19,7 +21,7 @@ crossScalaVersions := Seq(buildScalaVersion)
 
 lazy val root = (project in file("."))
   .settings(
-    name := "minecord",
+    name := projectName,
     assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeScala(false),
   )
 
@@ -29,11 +31,11 @@ assembly / assemblyMergeStrategy := {
   case _ => MergeStrategy.first
 }
 
-assembly / mainClass := Some("org.winlogon.MineCord")
+assembly / mainClass := Some(s"$projectPackage.$projectName")
 
 libraryDependencies ++= Seq(
   "io.papermc.paper" % "paper-api" % "1.21.4-R0.1-SNAPSHOT" % Provided,
-  "net.dv8tion" % "JDA" % "5.2.3",
+  "net.dv8tion" % "JDA" % "5.2.3" % Provided,
   "dev.vankka" % "mcdiscordreserializer" % "4.3.0",
 )
 
