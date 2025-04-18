@@ -177,7 +177,6 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
                 new Runnable {
                     override def run(): Unit = {
                         val newStatus = config.statusList(Random.nextInt(config.statusList.size))
-                        plugin.getLogger.info(s"Changing status to '$newStatus'")
                         jda.foreach(_.getPresence.setActivity(Activity.playing(newStatus)))
                         scheduleNextStatusChange()
                     }
