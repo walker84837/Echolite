@@ -11,6 +11,16 @@ import net.kyori.adventure.text.Component
 import io.papermc.paper.event.player.AsyncChatEvent
 
 class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotManager) extends Listener {
+    extension (string: String) {
+        def getDiscordCompatible(): String = {
+            val result = if (string.isEmpty || !string.contains('_')) {
+                string 
+            } else {
+                "(?<!_)_(?!_)".r replaceAllIn(string, "\\_")  
+            }
+            result
+        }
+    }
     private val plainTextSerializer = PlainTextComponentSerializer.plainText()
 
     @EventHandler(EventPriority.LOW)
@@ -31,7 +41,7 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
     def onPlayerJoin(event: PlayerJoinEvent): Unit = {
         if (config.sendPlayerJoinMessages) {
             val player = event.getPlayer()
-            discordBotManager.sendMessageToDiscord(s"**${player.getName}** has joined the server!")
+            discordBotManager.sendMessageToDiscord(s"**${player.getName.getDiscordCompatible()}** has joined the server!")
         }
     }
 
@@ -47,7 +57,7 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
         val discordMessage = plainTextSerializer.serialize(minecraftDeathMessage)
         val deathReason = discordMessage.replaceFirst(s"$playerName ", "")
 
-        discordBotManager.sendMessageToDiscord(s"**$playerName** $deathReason")
+        discordBotManager.sendMessageToDiscord(s"**${playerName.getDiscordCompatible()}** $deathReason")
     }
 
     @EventHandler
@@ -57,7 +67,8 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
         }
 
         val quitReason = event.getReason()
-        val formattedPlayerName = s"**${event.getPlayer().getName}**"
+        val displayName = event.getPlayer().getName
+        val formattedPlayerName = s"**${displayName.getDiscordCompatible()}**"
         val message = quitReason match {
             case QuitReason.DISCONNECTED => "has left the server!"
             case QuitReason.TIMED_OUT => "has been kicked due to an unexpected error."

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.winlogon.echolite
 
-import org.bukkit.Bukkit
+import org.bukkit.{Bukkit, ChatColor}
 import org.bukkit.plugin.java.JavaPlugin
-import org.bukkit.ChatColor
 import org.bukkit.event.Listener
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
@@ -11,7 +10,9 @@ import org.bukkit.scheduler.BukkitRunnable
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.Component
 
 import dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer
@@ -19,7 +20,7 @@ import dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext
 
-class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends ListenerAdapter  {
+class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration) extends ListenerAdapter  {
     private val legacySerializer = LegacyComponentSerializer.legacyAmpersand()
     private val minecraftSerializer = MinecraftSerializer.INSTANCE
 
@@ -41,7 +42,7 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
         val finalLegacyMessage = rawConfig.replace("$message", discordMessageLegacy)
         val finalComponent = legacySerializer.deserialize(finalLegacyMessage)
 
-        if (!isFolia(plugin)) {
+        if (!isFolia()) {
             new BukkitRunnable {
                 override def run(): Unit = Bukkit.broadcast(finalComponent)
             }.runTask(plugin)
@@ -86,17 +87,25 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
                 return
         }
 
-        val formattedMessage = ChatColor.translateAlternateColorCodes(
-            '&', s"&8(&3${event.getUser.getName}&7 -> &2you&8)&7 $message"
-        )
+        val nameComponent = Component.text(event.getUser.getName, NamedTextColor.DARK_AQUA)
+        val messageComponent = Component.text(message, NamedTextColor.GRAY)
+        val placeholderMsg = "<dark_gray>(<gray><sender> -> <dark_green>you</gray>)</dark_gray> <message>"
 
-        if (!isFolia(plugin)) {
+        if (!isFolia()) {
             new BukkitRunnable {
-                override def run(): Unit = player.sendMessage(formattedMessage)
+                override def run(): Unit = player.sendRichMessage(
+                    placeholderMsg,
+                    Placeholder.component("sender", nameComponent),
+                    Placeholder.component("message", messageComponent)
+                )
             }.runTask(plugin)
         } else {
             Bukkit.getGlobalRegionScheduler.execute(plugin, new Runnable {
-                override def run(): Unit = player.sendMessage(formattedMessage)
+                override def run(): Unit = player.sendRichMessage(
+                    placeholderMsg,
+                    Placeholder.component("sender", nameComponent),
+                    Placeholder.component("message", messageComponent)
+                )
             })
         }
 
@@ -106,7 +115,7 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
             .queue()
     }
 
-    private def isFolia(plugin: JavaPlugin): Boolean = {
+    private def isFolia(): Boolean = {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
             true
@@ -115,4 +124,3 @@ class DiscordChatBridge(plugin: JavaPlugin, config: Configuration) extends Liste
         }
     }
 }
-
