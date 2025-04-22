@@ -2,7 +2,7 @@ import Dependencies._
 import sbtassembly.AssemblyPlugin.defaultShellScript
 
 lazy val buildScalaVersion = "3.3.5"
-lazy val pluginVersion = "0.4.0"
+lazy val pluginVersion = "0.4.1"
 lazy val projectName = "Echolite"
 lazy val projectPackage = "org.winlogon.echolite"
 
