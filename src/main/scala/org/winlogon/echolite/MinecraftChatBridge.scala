@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.winlogon.echolite
 
+import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerQuitEvent.QuitReason
 import org.bukkit.event.player.{PlayerJoinEvent, PlayerQuitEvent}
-import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.{EventHandler, Listener, EventPriority}
 
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+
 import io.papermc.paper.event.player.AsyncChatEvent
 
 class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotManager) extends Listener {

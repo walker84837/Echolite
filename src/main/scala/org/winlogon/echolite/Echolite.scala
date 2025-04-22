@@ -8,14 +8,14 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.{JDABuilder, JDA}
 
+import org.bukkit.Bukkit
 import org.bukkit.event.{Listener, EventHandler}
 import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitRunnable
-import org.bukkit.{Bukkit, ChatColor}
 
-import java.util.concurrent.{TimeUnit, Executors}
 import java.util.concurrent.{ScheduledExecutorService}
+import java.util.concurrent.{TimeUnit, Executors}
 import java.util.logging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
