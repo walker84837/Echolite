@@ -9,12 +9,14 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.{JDABuilder, JDA}
 
 import org.bukkit.event.{Listener, EventHandler}
+import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.{Bukkit, ChatColor}
 
 import java.util.concurrent.{TimeUnit, Executors}
 import java.util.concurrent.{ScheduledExecutorService}
+import java.util.logging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -30,6 +32,13 @@ case class Configuration(
     statusList: List[String],
     discordMessage: String,
     minecraftMessage: String,
+)
+
+case class ServerState(
+    logger: Logger,
+    config: Configuration,
+    pluginManager: PluginManager,
+    plugin: Echolite,
 )
 
 class Echolite extends JavaPlugin with Listener {
@@ -56,7 +65,7 @@ class Echolite extends JavaPlugin with Listener {
             getConfig.getBoolean("discord.status-messages"),
             getConfig.getBoolean("discord.player-join-messages"),
             getConfig.getBoolean("discord.player-death-messages"),
-            getConfig.getList("discord.status-list").asScala.map(_.toString).toList,
+            getConfig.getStringList("discord.status-list").asScala.toList,
             getConfig.getString("message.discord"),
             getConfig.getString("message.minecraft")
         )
@@ -88,46 +97,37 @@ class Echolite extends JavaPlugin with Listener {
 
         logger.info(s"Hello World! I'm running on ${if (isFolia) "Folia" else "Bukkit"}")
 
-        discordBotManager = new DiscordBotManager(this, config)(ec)
+        var state = ServerState(logger, config, Bukkit.getPluginManager(), this)
+        discordBotManager = DiscordBotManager(state)(ec)
         discordBotManager.startBot()
 
         getServer.getPluginManager.registerEvents(new MinecraftChatBridge(config, discordBotManager), this)
 
-        if (config.sendStatusMessages) {
-            // TODO: doesn't send message to the server
-            discordBotManager.sendMessageToDiscord("**Server Status** The server is online.")
-        }
     }
 
     override def onDisable(): Unit = {
-        if (config.sendStatusMessages) {
-            discordBotManager.sendMessageToDiscord("**Server Status** The server is shutting down.")
-        }
         discordBotManager.shutdownBot()
     }
 }
 
-class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: ExecutionContext) {
+class DiscordBotManager(state: ServerState)(implicit ec: ExecutionContext) {
     private var jda: Option[JDA] = None
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
     def startBot(): Unit = {
-        try {
-            plugin.getLogger.info("Starting Discord bot")
-            jda = Some(
-                JDABuilder
-                    .createDefault(config.token)
-                    .addEventListeners(new DiscordChatBridge(plugin, config))
-                    .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                    .build()
-            )
-        } catch {
-            case e: Exception =>
-                plugin.getLogger.severe(s"Failed to initialize Discord bot: ${e.getMessage}")
-                plugin.getServer.getPluginManager.disablePlugin(plugin)
-        }
+        Future {
+            state.logger.info("Starting Discord bot (awaiting ready)...")
+            val bot = JDABuilder
+                .createDefault(state.config.token)
+                .addEventListeners(new DiscordChatBridge(state.plugin, state.config))
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                .build()
+                .awaitReady()
 
-        jda.foreach { bot =>
+            state.logger.info("Discord bot ready, registering commands & status cycling")
+
+            jda = Some(bot)
+
             val commands = bot.updateCommands()
             commands.addCommands(
                 Commands.slash("list", "Show the list of online players"),
@@ -137,11 +137,23 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
             )
             commands.queue()
 
+            if (state.config.sendStatusMessages) {
+                sendMessageToDiscord("**Server Status** The server is online.")
+            }
             startStatusCycling()
+
+            
+        }.recover {
+            case e: Exception =>
+                state.logger.severe(s"Failed to initialize Discord bot: ${e.getMessage}")
+                state.pluginManager.disablePlugin(state.plugin)
         }
     }
 
     def shutdownBot(): Unit = {
+        if (state.config.sendStatusMessages) {
+            sendMessageToDiscord("**Server Status** The server is shutting down.")
+        }
         jda.foreach(_.shutdown())
         scheduler.shutdown()
         jda = None
@@ -149,20 +161,20 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
 
     def sendMessageToDiscord(message: String): Unit = {
         jda.foreach { bot =>
-            val channel = bot.getTextChannelById(config.channelId)
+            val channel = bot.getTextChannelById(state.config.channelId)
 
             if (channel != null) {
                 Future {
                     channel.sendMessage(message).queue()
                 }.onComplete {
                     case Failure(exception) =>
-                        plugin.getLogger.severe(
+                        state.logger.severe(
                             s"Failed to send message to Discord: ${exception.getMessage}"
                         )
                     case Success(_) => // Message sent successfully
                 }
             } else {
-                plugin.getLogger.severe(
+                state.logger.severe(
                     "Discord channel not found. Please check the channel ID in the config."
                 )
             }
@@ -176,7 +188,7 @@ class DiscordBotManager(plugin: JavaPlugin, config: Configuration)(implicit ec: 
             scheduler.schedule(
                 new Runnable {
                     override def run(): Unit = {
-                        val newStatus = config.statusList(Random.nextInt(config.statusList.size))
+                        val newStatus = state.config.statusList(Random.nextInt(state.config.statusList.size))
                         jda.foreach(_.getPresence.setActivity(Activity.playing(newStatus)))
                         scheduleNextStatusChange()
                     }
