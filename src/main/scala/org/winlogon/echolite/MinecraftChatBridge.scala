@@ -73,7 +73,7 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
         val message = quitReason match {
             case QuitReason.DISCONNECTED => "has left the server!"
             case QuitReason.TIMED_OUT => "has been kicked due to an unexpected error."
-            case QuitReason.ERRONEOUS_STATE => "has been has timed out."
+            case QuitReason.ERRONEOUS_STATE => "has been timed out."
             case QuitReason.KICKED => "has been kicked."
             case null => "has been kicked for an unknown reason."
         }
