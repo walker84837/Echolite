@@ -36,6 +36,13 @@ class EcholiteLoader extends PluginLoader {
             )
         )
 
+        resolver.addDependency(
+            Dependency(
+                DefaultArtifact("dev.vankka:mcdiscordreserializer:4.3.0"),
+                null
+            )
+        )
+
         classpathBuilder.addLibrary(resolver)
     }
 }

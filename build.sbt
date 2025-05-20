@@ -2,7 +2,7 @@ import Dependencies._
 import sbtassembly.AssemblyPlugin.defaultShellScript
 
 lazy val buildScalaVersion = "3.3.5"
-lazy val pluginVersion = "0.4.1"
+lazy val pluginVersion = "0.4.2"
 lazy val projectName = "Echolite"
 lazy val projectPackage = "org.winlogon.echolite"
 
@@ -36,7 +36,7 @@ assembly / mainClass := Some(s"$projectPackage.$projectName")
 libraryDependencies ++= Seq(
   "io.papermc.paper" % "paper-api" % "1.21.4-R0.1-SNAPSHOT" % Provided,
   "net.dv8tion" % "JDA" % "5.2.3" % Provided,
-  "dev.vankka" % "mcdiscordreserializer" % "4.3.0",
+  "dev.vankka" % "mcdiscordreserializer" % "4.3.0" % Provided,
 )
 
 resolvers += "papermc-repo" at "https://repo.papermc.io/repository/maven-public/"
