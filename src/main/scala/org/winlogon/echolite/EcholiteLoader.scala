@@ -18,7 +18,7 @@ class EcholiteLoader extends PluginLoader {
             RemoteRepository.Builder(
                 "central", 
                 "default", 
-                "https://repo.maven.apache.org/maven2/"
+                MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR
             ).build()
         )
 
