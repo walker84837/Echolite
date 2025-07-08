@@ -37,6 +37,7 @@ libraryDependencies ++= Seq(
   "io.papermc.paper" % "paper-api" % "1.21.6-R0.1-SNAPSHOT" % Provided,
   "net.dv8tion" % "JDA" % "5.2.3" % Provided,
   "dev.vankka" % "mcdiscordreserializer" % "4.3.0" % Provided,
+  "org.scalatest" %% "scalatest" % "3.2.19" % Test,
 )
 
 resolvers += "papermc-repo" at "https://repo.papermc.io/repository/maven-public/"

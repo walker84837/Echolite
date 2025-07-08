@@ -15,9 +15,9 @@ class MinecraftChatBridge(config: Configuration, discordBotManager: DiscordBotMa
     extension (string: String) {
         def getDiscordCompatible(): String = {
             val result = if (string.isEmpty || !string.contains('_')) {
-                string 
+                string
             } else {
-                "(?<!_)_(?!_)".r replaceAllIn(string, "\\_")  
+                "(?<!_)_(?!_)".r replaceAllIn(string, "\\\\_")
             }
             result
         }
